@@ -1,208 +1,928 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LFR RADIO LINK</title>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --color-bg-start: #041704;
-            --color-bg-end: #0f3516;
-            --color-text: #00ff00;
-            --color-crt-glow: #0aff0a;
-            --color-button: #032503;
-            --color-button-hover: #0a3a0a;
-            --color-divider: #010a01;
-            --scanline-opacity: 0.2;
-            --flicker-animation-duration: 0.1s;
-        }
+  <meta charset="UTF-8" />
+  <title>ØH3 LFR Radio Link</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        /* Base styles and CRT font */
-        body, html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: 'VT323', monospace;
-            background: linear-gradient(180deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
-            color: var(--color-text);
-            overflow-x: hidden;
-            user-select: none;
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="%230aff0a" opacity="0.5"/></svg>') 8 8, default;
-        }
+  <!-- Retro terminal font -->
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+  />
 
-        /* Container for field radio panel look */
-        .radio-panel {
-            width: 95%;
-            max-width: 500px;
-            min-height: 90vh;
-            border: 4px solid #000000;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.5);
-            background-color: #031503;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-        }
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
-        /* Top Bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            text-shadow: 0 0 5px var(--color-crt-glow);
-            margin-bottom: 5px;
-        }
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-        .status-indicator {
-            padding: 3px 8px;
-            border: 1px solid var(--color-text);
-            background-color: #010f01;
-            box-shadow: 0 0 5px var(--color-crt-glow);
-            animation: pulse-glow 2s infinite alternate;
-        }
+    :root {
+      --bg: #041704;
+      --panel: #1c5a24;
+      --panel-light: #2f7c3a;
+      --panel-dark: #12411a;
+      --crt: #7bd37b;
+      --crt-soft: #6ab569;
+      --crt-dim: #4f8a4f;
+      --border: #0f3514;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+      --radius-xl: 22px;
+      --text-main: #021102; /* almost black */
+      --text-muted: #163d16;
+    }
 
-        /* CRT Display */
-        .crt-display-wrapper {
-            background-color: black;
-            border: 3px inset #010a01;
-            padding: 10px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.4), inset 0 0 15px rgba(0, 255, 0, 0.2);
-            position: relative;
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .crt-display {
-            line-height: 1.2;
-            text-align: left;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            text-shadow: 0 0 5px var(--color-crt-glow);
-            animation: crt-flicker var(--flicker-animation-duration) infinite alternate;
-            z-index: 2;
-        }
-        .crt-channel-num {
-            font-size: 2.5rem;
-            margin-bottom: 5px;
-            color: var(--color-crt-glow);
-        }
-        .crt-label {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-        .crt-description {
-            font-size: 1rem;
-            color: #00aa00;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 0%, #0f3516 0, #041704 55%, #000 100%);
+      color: var(--text-main);
+      -webkit-font-smoothing: none;
+      font-family: "VT323", ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+      letter-spacing: 0.04em;
+    }
 
-        /* CRT Effects */
-        .scanlines {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, var(--scanline-opacity)) 50%);
-            background-size: 100% 4px;
-            z-index: 3;
-            pointer-events: none;
-        }
-        .flimmer-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            z-index: 4;
-            pointer-events: none;
-            animation: flimmer 4s linear infinite;
-        }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 14px;
+      position: relative;
+      overflow: hidden;
+    }
 
-        /* Ridge/Divider */
-        .divider {
-            height: 5px;
-            background-color: var(--color-divider);
-            border-top: 1px solid #000000;
-            border-bottom: 1px solid #000000;
-            box-shadow: inset 0 1px 3px #000000, 0 1px 2px #111111;
-            margin: 10px 0;
-        }
+    /* Global CRT noise + slight wobble */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -40px;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.3) 0,
+          rgba(0, 0, 0, 0.3) 1px,
+          rgba(0, 0, 0, 0) 1px,
+          rgba(0, 0, 0, 0) 3px
+        );
+      opacity: 0.4;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+      z-index: -1;
+      animation: global-flicker 3s infinite steps(2, end);
+    }
 
-        /* Channel Buttons */
-        .channel-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-grow: 1;
-        }
-        .channel-button {
-            background-color: var(--color-button);
-            border: 2px solid #000000;
-            color: var(--color-text);
-            padding: 10px;
-            text-align: left;
-            text-decoration: none;
-            font-size: 1.4rem;
-            cursor: pointer;
-            transition: background-color 0.1s, box-shadow 0.1s;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: inset 0 0 5px #000000, 2px 2px 5px #000000;
-        }
-        .channel-button:hover {
-            background-color: var(--color-button-hover);
-            box-shadow: inset 0 0 8px var(--color-crt-glow), 0 0 5px var(--color-crt-glow);
-            text-shadow: 0 0 5px var(--color-crt-glow);
-        }
-        .channel-button:active {
-            background-color: var(--color-text);
-            color: #000000;
-            box-shadow: inset 0 0 5px #000000;
-            transform: translateY(1px);
-        }
+    @keyframes global-flicker {
+      0%, 100% { opacity: 0.4; transform: translate(0,0) scale(1); }
+      25% { opacity: 0.45; transform: translate(-1px, 0.5px) scale(1.002); }
+      50% { opacity: 0.35; transform: translate(1px, -0.5px) scale(0.998); }
+      75% { opacity: 0.42; transform: translate(-0.5px, -1px) scale(1.001); }
+    }
 
-        /* Knob Icon - simple representation */
-        .knob {
-            width: 15px;
-            height: 15px;
-            background-color: #1a1a1a;
-            border-radius: 50%;
-            border: 2px solid #000000;
-            position: relative;
-            box-shadow: inset 0 0 3px #333333;
-        }
-        .knob::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 3px;
-            height: 5px;
-            background-color: var(--color-text);
-            transform: translate(-50%, -50%) rotate(45deg);
-        }
-        .channel-button:hover .knob {
-            border-color: var(--color-crt-glow);
-        }
+    .radio-shell {
+      width: 100%;
+      max-width: 420px;
+      background: radial-gradient(circle at 10% 0%, var(--panel-light) 0, var(--panel) 40%, var(--panel-dark) 100%);
+      border-radius: var(--radius-xl);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 14px 14px 16px;
+      position: relative;
+      overflow: hidden;
+      transform-origin: center;
+      animation: chassis-shake 6s infinite steps(3, end);
+    }
 
-        /* Static Overlay for Link Click */
-        .static-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4jWDAAAAHlBMVEX///8AAACLi4uOjo6qqqrIyMjY2Nje3t7u7u7////qQ+2nAAAAy0lEQVR4XrWSwQ6DIBBEF79m06L//10rR2qQ202Yj1gQh3vB6U6P0k7a5K/aP29N1jM24/tT60/d4lO+l/W3t2t/lVd+S/S729W4j2R+l/g/3r/5q+x/t/t3/wD2Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6VwAAAP//Xn8t6tUAAACcQklEQVR4XrWSyU6DMBCGP06l03r//5l69XG7XG5V56hUqYQwhs9k8N578+eX+N/82/z5/5P7b/PrX3H6l/Z3v/L4O/Jvrf//+j2Wn8v2t/5uH35N9L/n/V//p+x/t/t3/yD3Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6SvwG/D/Y1b5K+j/5V2P6
+    /* Subtle chassis jitter */
+    @keyframes chassis-shake {
+      0%, 100% { transform: translate(0,0) rotate(0deg); }
+      20% { transform: translate(-0.4px, 0.3px) rotate(-0.1deg); }
+      40% { transform: translate(0.6px, -0.3px) rotate(0.12deg); }
+      60% { transform: translate(-0.3px, 0.4px) rotate(-0.08deg); }
+      80% { transform: translate(0.5px, -0.4px) rotate(0.06deg); }
+    }
+
+    .radio-shell::before {
+      /* glass reflection + scuffs */
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.09) 0,
+          rgba(255, 255, 255, 0.03) 22%,
+          rgba(0, 0, 0, 0) 32%,
+          rgba(0, 0, 0, 0) 100%
+        ),
+        repeating-linear-gradient(
+          140deg,
+          rgba(0, 0, 0, 0.25) 0,
+          rgba(0, 0, 0, 0.25) 1px,
+          transparent 1px,
+          transparent 6px
+        );
+      mix-blend-mode: screen;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .radio-shell::after {
+      /* vignette / burn-in */
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.45) 100%);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .radio-shell-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .radio-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      border: 2px solid #0a2a0f;
+      background: radial-gradient(circle at 30% 0%, var(--crt) 0, var(--crt-soft) 40%, var(--crt-dim) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.7),
+        0 0 8px rgba(0, 0, 0, 0.5);
+      filter: blur(0.2px);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand-text-main {
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .brand-text-sub {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .status-block {
+      font-size: 12px;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #0a2a10;
+      background: linear-gradient(90deg, #4c9c54, #71c574, #4c9c54);
+      box-shadow:
+        inset 0 0 3px rgba(0, 0, 0, 0.6),
+        0 0 10px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: status-flicker 2.4s infinite steps(2, end);
+    }
+
+    .status-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #021202;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.9),
+        0 0 6px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-led::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      background: #021202;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+    }
+
+    @keyframes status-flicker {
+      0%, 100% { filter: brightness(1); }
+      20% { filter: brightness(0.9); }
+      50% { filter: brightness(1.15); }
+      55% { filter: brightness(0.8); }
+      70% { filter: brightness(1.05); }
+    }
+
+    /* Display bloc */
+    .display {
+      margin-bottom: 12px;
+      padding: 10px 10px 11px;
+      border-radius: 10px;
+      border: 2px solid #0a2a10;
+      background: radial-gradient(circle at 50% 0%, var(--crt) 0, var(--crt-soft) 35%, var(--crt-dim) 100%);
+      box-shadow:
+        inset 0 0 22px rgba(0, 0, 0, 0.45),
+        0 0 22px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+      animation: crt-flicker 3.6s infinite steps(3, end);
+    }
+
+    @keyframes crt-flicker {
+      0%, 100% { filter: brightness(1); }
+      10% { filter: brightness(0.9); }
+      19% { filter: brightness(1.12); }
+      20% { filter: brightness(0.8); }
+      50% { filter: brightness(1.05); }
+      51% { filter: brightness(0.85); }
+      80% { filter: brightness(1.02); }
+    }
+
+    .display::before {
+      /* scan lines */
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.22) 0,
+        rgba(0, 0, 0, 0.22) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      mix-blend-mode: multiply;
+      opacity: 0.75;
+      pointer-events: none;
+    }
+
+    .display::after {
+      /* cracked glass overlay */
+      content: "";
+      position: absolute;
+      inset: -4px;
+      pointer-events: none;
+      background:
+        /* main diagonal crack */
+        linear-gradient(
+          135deg,
+          transparent 0%,
+          transparent 44%,
+          rgba(0, 0, 0, 0.4) 46%,
+          rgba(255, 255, 255, 0.7) 49%,
+          rgba(0, 0, 0, 0.7) 51%,
+          transparent 54%,
+          transparent 100%
+        ),
+        /* side branch 1 */
+        linear-gradient(
+          160deg,
+          transparent 0%,
+          transparent 58%,
+          rgba(255, 255, 255, 0.4) 60%,
+          rgba(0, 0, 0, 0.7) 62%,
+          transparent 64%,
+          transparent 100%
+        ),
+        /* side branch 2 */
+        linear-gradient(
+          110deg,
+          transparent 0%,
+          transparent 38%,
+          rgba(255, 255, 255, 0.4) 40%,
+          rgba(0, 0, 0, 0.8) 42%,
+          transparent 44%,
+          transparent 100%
+        );
+      mix-blend-mode: screen;
+      opacity: 0.55;
+      transform-origin: center;
+      animation: crack-flicker 5s infinite steps(3, end);
+    }
+
+    @keyframes crack-flicker {
+      0%, 100% { opacity: 0.55; }
+      30% { opacity: 0.68; }
+      40% { opacity: 0.45; }
+      65% { opacity: 0.6; }
+      75% { opacity: 0.5; }
+    }
+
+    /* traveling scan bar */
+    .display-scan {
+      content: "";
+      position: absolute;
+      left: -15%;
+      right: -15%;
+      height: 18px;
+      top: -20%;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.16),
+        rgba(255, 255, 255, 0)
+      );
+      opacity: 0.35;
+      pointer-events: none;
+      animation: scanline 5.5s linear infinite;
+    }
+
+    @keyframes scanline {
+      0% { top: -20%; }
+      100% { top: 120%; }
+    }
+
+    .display-row {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .display-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.9),
+        0 0 6px rgba(0, 0, 0, 0.7);
+    }
+
+    .display-primary {
+      font-size: 20px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+    }
+
+    .display-primary::after {
+      /* slight ghost shadow offset = broken focus */
+      content: attr(data-ghost);
+      position: absolute;
+      left: 1px;
+      top: 1px;
+      opacity: 0.28;
+      transform: skewX(-1deg);
+    }
+
+    .display-secondary {
+      font-size: 14px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      position: relative;
+    }
+
+    .display-secondary::after {
+      content: attr(data-ghost);
+      position: absolute;
+      left: 1px;
+      top: 1px;
+      opacity: 0.26;
+      transform: skewX(1deg);
+    }
+
+    .display-meta {
+      font-size: 11px;
+      text-align: right;
+      opacity: 0.72;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      filter: blur(0.2px);
+    }
+
+    .ridge {
+      margin: 8px 0 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.65) 0,
+        rgba(8, 40, 13, 1) 18%,
+        rgba(19, 79, 32, 1) 50%,
+        rgba(8, 40, 13, 1) 82%,
+        rgba(0, 0, 0, 0.65) 100%
+      );
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 10px 18px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Channels */
+    .channel-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .channel {
+      position: relative;
+      border-radius: 6px;
+      padding: 7px 9px;
+      background: linear-gradient(90deg, #5fb365, #6fcb74, #5fb365);
+      border: 2px solid #0e2f12;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition:
+        transform 80ms ease,
+        box-shadow 80ms ease,
+        filter 80ms ease;
+      box-shadow:
+        0 4px 0 #0e2f12,
+        0 10px 18px rgba(0, 0, 0, 0.7);
+      color: var(--text-main);
+    }
+
+    .channel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.02) 40%,
+        rgba(0, 0, 0, 0) 60%
+      );
+      mix-blend-mode: screen;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .channel:hover,
+    .channel:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow:
+        0 6px 0 #0c2910,
+        0 14px 24px rgba(0, 0, 0, 0.9);
+      filter: brightness(1.05);
+    }
+
+    .channel:active {
+      transform: translateY(1px);
+      box-shadow:
+        0 2px 0 #0c2910,
+        0 6px 14px rgba(0, 0, 0, 0.7);
+      filter: brightness(0.97);
+    }
+
+    .channel-active {
+      filter: contrast(1.1) brightness(1.04);
+      box-shadow:
+        0 6px 0 #0c2910,
+        0 16px 26px rgba(0, 0, 0, 0.95);
+    }
+
+    .channel-knob {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid #031105;
+      background: radial-gradient(circle at 30% 0, #7ed57e 0, #4e8f4f 40%, #27552a 100%);
+      box-shadow:
+        inset 0 2px 4px rgba(255, 255, 255, 0.25),
+        0 4px 0 #031105,
+        0 10px 14px rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .channel-knob::after {
+      content: "";
+      width: 14px;
+      height: 2px;
+      border-radius: 1px;
+      background: #021102;
+      transform-origin: center;
+      transform: rotate(25deg);
+      box-shadow:
+        0 0 4px rgba(0, 0, 0, 0.9),
+        0 0 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .channel-indicator {
+      flex-shrink: 0;
+      font-size: 14px;
+      min-width: 68px;
+      text-transform: uppercase;
+    }
+
+    .channel-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      flex: 1;
+    }
+
+    .channel-label {
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .channel-description {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .channel-arrow {
+      flex-shrink: 0;
+      font-size: 18px;
+      opacity: 0.65;
+    }
+
+    .channel:hover .channel-arrow,
+    .channel:focus-visible .channel-arrow {
+      opacity: 1;
+    }
+
+    /* Bottom */
+    .bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .bottom-row-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tiny-led {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #021202;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.9),
+        0 0 6px rgba(0, 0, 0, 0.8);
+    }
+
+    .bottom-row-right {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    /* Static overlay when switching */
+    .static-overlay {
+      pointer-events: none;
+      position: fixed;
+      inset: -20px;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.55) 0,
+          rgba(0, 0, 0, 0.55) 1px,
+          rgba(255, 255, 255, 0.14) 1px,
+          rgba(255, 255, 255, 0.14) 3px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.4) 0,
+          rgba(0, 0, 0, 0.4) 1px,
+          rgba(255, 255, 255, 0.12) 1px,
+          rgba(255, 255, 255, 0.12) 4px
+        );
+      opacity: 0;
+      mix-blend-mode: multiply;
+      z-index: 999;
+      transition: opacity 0.12s ease-out;
+    }
+
+    .static-overlay.active {
+      opacity: 0.7;
+      animation: static-jitter 0.18s steps(3, end) 2;
+    }
+
+    @keyframes static-jitter {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-2px, 1px); }
+      50% { transform: translate(2px, -1px); }
+      75% { transform: translate(-1px, -2px); }
+      100% { transform: translate(1px, 2px); }
+    }
+
+    @media (max-width: 420px) {
+      .radio-shell {
+        padding: 12px 10px 14px;
+      }
+
+      .brand-text-sub {
+        display: none;
+      }
+
+      .display-primary {
+        font-size: 18px;
+      }
+
+      .display-meta {
+        display: none;
+      }
+
+      .channel {
+        padding: 7px 8px;
+      }
+
+      .channel-indicator {
+        min-width: 56px;
+        font-size: 13px;
+      }
+
+      .channel-label {
+        font-size: 14px;
+      }
+
+      .channel-description {
+        font-size: 11px;
+      }
+
+      .bottom-row-right {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="static-overlay"></div>
+
+  <div class="radio-shell">
+    <div class="radio-shell-inner" aria-label="ØH3 LFR link radio">
+      <!-- Top row -->
+      <div class="radio-top">
+        <div class="brand-block">
+          <div class="brand-mark">ØH3</div>
+          <div class="brand-text">
+            <div class="brand-text-main">LFR RADIO LINK</div>
+            <div class="brand-text-sub">Long-Range Field Routing</div>
+          </div>
+        </div>
+
+        <div class="status-block">
+          <div class="status-led"></div>
+          <div>LIVE LINE</div>
+        </div>
+      </div>
+
+      <!-- Display -->
+      <div class="display">
+        <div class="display-scan"></div>
+        <div class="display-row">
+          <div class="display-text">
+            <div
+              class="display-primary"
+              id="displayPrimary"
+              data-ghost="STANDBY • DIAL CHANNEL"
+            >
+              STANDBY • DIAL CHANNEL
+            </div>
+            <div
+              class="display-secondary"
+              id="displaySecondary"
+              data-ghost="TAP A BUTTON TO OPEN LINK"
+            >
+              TAP A BUTTON TO OPEN LINK
+            </div>
+          </div>
+          <div class="display-meta">
+            <span>LFR-ØH3</span>
+            <span>MF/SECURE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ridge"></div>
+
+      <!-- Channels -->
+      <div class="channel-grid" aria-label="Link channels">
+        <!-- CH 01 -->
+        <button
+          class="channel channel-active"
+          data-url="https://oh3kriger.no"
+          data-channel="CH-01"
+          data-label="SHOP ØH3"
+          data-desc="Main store. All units."
+        >
+          <div class="channel-knob"></div>
+          <div class="channel-indicator">CH-01</div>
+          <div class="channel-body">
+            <div class="channel-label">Shop ØH3</div>
+            <div class="channel-description">Main store & all products.</div>
+          </div>
+          <div class="channel-arrow">▶</div>
+        </button>
+
+        <!-- CH 02 -->
+        <button
+          class="channel"
+          data-url="https://oh3kriger.no/collections/new-drop"
+          data-channel="CH-02"
+          data-label="LATEST DROP"
+          data-desc="Current release, limited."
+        >
+          <div class="channel-knob"></div>
+          <div class="channel-indicator">CH-02</div>
+          <div class="channel-body">
+            <div class="channel-label">Latest Drop</div>
+            <div class="channel-description">Fresh deployment. Limited pieces.</div>
+          </div>
+          <div class="channel-arrow">▶</div>
+        </button>
+
+        <!-- CH 03 -->
+        <button
+          class="channel"
+          data-url="https://oh3kriger.no/collections/pansra"
+          data-channel="CH-03"
+          data-label="PANSRA SNUSBOKS"
+          data-desc="Specs, intel & orders."
+        >
+          <div class="channel-knob"></div>
+          <div class="channel-indicator">CH-03</div>
+          <div class="channel-body">
+            <div class="channel-label">Pansra Snusboks</div>
+            <div class="channel-description">Details, specs & pre-orders.</div>
+          </div>
+          <div class="channel-arrow">▶</div>
+        </button>
+
+        <!-- CH 04 -->
+        <button
+          class="channel"
+          data-url="https://oh3kriger.no/pages/events"
+          data-channel="CH-04"
+          data-label="TOUR / EVENTS"
+          data-desc="Norway tour & stands."
+        >
+          <div class="channel-knob"></div>
+          <div class="channel-indicator">CH-04</div>
+          <div class="channel-body">
+            <div class="channel-label">Tour & Events</div>
+            <div class="channel-description">Where to find ØH3 in the wild.</div>
+          </div>
+          <div class="channel-arrow">▶</div>
+        </button>
+
+        <!-- CH 05 -->
+        <button
+          class="channel"
+          data-url="https://onewildsecond.com"
+          data-channel="CH-05"
+          data-label="ONE WILD SECOND"
+          data-desc="Stories & behind the ops."
+        >
+          <div class="channel-knob"></div>
+          <div class="channel-indicator">CH-05</div>
+          <div class="channel-body">
+            <div class="channel-label">One Wild Second</div>
+            <div class="channel-description">Blog: field notes & reflections.</div>
+          </div>
+          <div class="channel-arrow">▶</div>
+        </button>
+
+        <!-- CH 06 -->
+        <button
+          class="channel"
+          data-url="mailto:post@oh3kriger.no"
+          data-channel="CH-06"
+          data-label="CONTACT / COLLAB"
+          data-desc="Brands, units & ops."
+        >
+          <div class="channel-knob"></div>
+          <div class="channel-indicator">CH-06</div>
+          <div class="channel-body">
+            <div class="channel-label">Contact / Collab</div>
+            <div class="channel-description">Hit me up for ops & partnerships.</div>
+          </div>
+          <div class="channel-arrow">▶</div>
+        </button>
+      </div>
+
+      <!-- Bottom -->
+      <div class="bottom-row">
+        <div class="bottom-row-left">
+          <div class="tiny-led"></div>
+          <span>FIELD USE ONLY</span>
+        </div>
+        <div class="bottom-row-right">
+          BUILD: ØH3-LFR-01 (DAMAGED)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const channels = document.querySelectorAll(".channel");
+      const displayPrimary = document.getElementById("displayPrimary");
+      const displaySecondary = document.getElementById("displaySecondary");
+      const staticOverlay = document.querySelector(".static-overlay");
+
+      const defaultPrimary = "STANDBY • DIAL CHANNEL";
+      const defaultSecondary = "TAP A BUTTON TO OPEN LINK";
+
+      let activeChannel = document.querySelector(".channel-active");
+
+      function setDisplayText(primary, secondary) {
+        displayPrimary.textContent = primary;
+        displayPrimary.setAttribute("data-ghost", primary);
+        displaySecondary.textContent = secondary;
+        displaySecondary.setAttribute("data-ghost", secondary);
+      }
+
+      function updateDisplayFromChannel(el) {
+        if (!el) {
+          setDisplayText(defaultPrimary, defaultSecondary);
+          return;
+        }
+        const channel = el.getAttribute("data-channel") || "";
+        const label = el.getAttribute("data-label") || "";
+        const desc = el.getAttribute("data-desc") || "";
+
+        const primaryText = channel + " • " + label;
+        const secondaryText = desc.toUpperCase();
+
+        setDisplayText(primaryText, secondaryText);
+      }
+
+      channels.forEach((ch) => {
+        ch.addEventListener("mouseenter", () => {
+          updateDisplayFromChannel(ch);
+        });
+
+        ch.addEventListener("focus", () => {
+          updateDisplayFromChannel(ch);
+        });
+
+        ch.addEventListener("mouseleave", () => {
+          updateDisplayFromChannel(activeChannel);
+        });
+
+        ch.addEventListener("click", () => {
+          const url = ch.getAttribute("data-url");
+          if (!url) return;
+
+          if (activeChannel) {
+            activeChannel.classList.remove("channel-active");
+          }
+          activeChannel = ch;
+          ch.classList.add("channel-active");
+          updateDisplayFromChannel(ch);
+
+          staticOverlay.classList.add("active");
+          setTimeout(() => {
+            staticOverlay.classList.remove("active");
+          }, 220);
+
+          setTimeout(() => {
+            window.location.href = url;
+          }, 130);
+        });
+      });
+
+      setDisplayText(defaultPrimary, defaultSecondary);
+      updateDisplayFromChannel(activeChannel);
+    })();
+  </script>
+</body>
+</html>
